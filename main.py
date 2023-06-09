@@ -62,14 +62,15 @@ def market_open(context):
                 hold_list.append(stock)
 
     buy_list = []
-    for stock in suggested_buy_list:
-        if stock not in hold_list:
-            buy_list.append(stock)
+    if trading_now(context):
+        for stock in suggested_buy_list:
+            if stock not in hold_list:
+                buy_list.append(stock)
 
-    if len(buy_list) != 0:
-        cash = context.portfolio.available_cash / len(buy_list)
-        for stock in buy_list:
-            order_target_value(stock, cash)
+        if len(buy_list) != 0:
+            cash = context.portfolio.available_cash / len(buy_list)
+            for stock in buy_list:
+                order_target_value(stock, cash)
 
 
 ## 收盘后运行函数
