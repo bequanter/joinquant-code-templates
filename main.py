@@ -13,7 +13,6 @@ def initialize(context):
     # 设定起始参数
     set_params(context)
 
-    ## 运行函数（reference_security为运行时间的参考标的；传入的标的只做种类区分，因此传入'000300.XSHG'或'510300.XSHG'是一样的）
     # 开盘前运行
     run_daily(before_market_open, time='before_open', reference_security='000300.XSHG')
     # 开盘时运行
@@ -25,18 +24,17 @@ def initialize(context):
 ## 开盘前运行函数
 def before_market_open(context):
     # 根据策略选出股票池
-    g.stock_pool = get_stocks(context)
+    g.stock_pool = get_stock_pool_by_strategy(context)
 
 
 def trading_now(context):
     return True
 
 
-def should_buy(context):
+def should_buy(context, stock):
     return True
 
-
-def should_sell(context):
+def should_sell(context, stock):
     return True
 
 
@@ -46,34 +44,32 @@ def should_hold(context):
 
 ## 开盘时运行函数
 def market_open(context):
-    long_list = []
-    short_list = []
+    suggested_buy_list = []
     hold_list = []
 
-    if (trading_now(context) == True):
+    if trading_now(context):
         for stock in g.stock_pool:
-            if (should_buy(context) == True):
-                long_list.append(stock)
-            if (should_sell(context) == True):
-                short_list.append(stock)
+            if should_buy(context, stock):
+                suggested_buy_list.append(stock)
+
     current_stock_set = list(context.portfolio.positions.keys())
 
-    for stock in current_stock_set:
-        if (stock in short_list):
-            order_target_value(stock, 0)
-        else:
-            hold_list.append(stock)
+    if trading_now(context):
+        for stock in current_stock_set:
+            if should_sell(context, stock):
+                order_target_value(stock, 0)
+            else:
+                hold_list.append(stock)
+
     buy_list = []
-    for stock in long_list:
+    for stock in suggested_buy_list:
         if stock not in hold_list:
             buy_list.append(stock)
 
-    if len(buy_list) == 0:
-        Cash = context.portfolio.available_cash;
-    else:
-        Cash = context.portfolio.available_cash / len(buy_list)
+    if len(buy_list) != 0:
+        cash = context.portfolio.available_cash / len(buy_list)
         for stock in buy_list:
-            order_target_value(stock, Cash)
+            order_target_value(stock, cash)
 
 
 ## 收盘后运行函数
@@ -84,7 +80,7 @@ def after_market_close(context):
         log.info('成交记录：' + str(_trade))
 
 
-def get_stocks(context):
+def get_stock_pool_by_strategy(context):
     selected_stocks = get_fundamentals(
         query(valuation.code,
               valuation.pe_ratio,
