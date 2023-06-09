@@ -43,11 +43,16 @@ def should_hold(context):
     return True
 
 
+def should_buy_more(context, stock):
+    return True
+
+
 ## 开盘时运行函数
 def market_open(context):
     suggested_buy_list = []
     hold_list = []
     buy_list = []
+    buy_more_list = []
 
     if trading_now(context):
         for stock in g.stock_pool:
@@ -61,14 +66,24 @@ def market_open(context):
             else:
                 hold_list.append(stock)
 
+        for stock in hold_list:
+            if should_buy_more(context, stock):
+                buy_more_list.append(stock)
+            else:
+                hold_list.remove(stock)
+
         for stock in suggested_buy_list:
             if stock not in hold_list:
                 buy_list.append(stock)
 
-        if len(buy_list) != 0:
-            cash = context.portfolio.available_cash / len(buy_list)
-            for stock in buy_list:
-                order_target_value(stock, cash)
+        buy_stock(context, buy_list, buy_more_list)
+
+
+def buy_stock(context, buy_list, buy_more_list):
+    if len(buy_list) != 0:
+        cash = context.portfolio.available_cash / len(buy_list)
+        for stock in buy_list:
+            order_target_value(stock, cash)
 
 
 ## 收盘后运行函数
