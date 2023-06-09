@@ -34,6 +34,7 @@ def trading_now(context):
 def should_buy(context, stock):
     return True
 
+
 def should_sell(context, stock):
     return True
 
@@ -46,23 +47,20 @@ def should_hold(context):
 def market_open(context):
     suggested_buy_list = []
     hold_list = []
+    buy_list = []
 
     if trading_now(context):
         for stock in g.stock_pool:
             if should_buy(context, stock):
                 suggested_buy_list.append(stock)
 
-    current_stock_set = list(context.portfolio.positions.keys())
-
-    if trading_now(context):
+        current_stock_set = list(context.portfolio.positions.keys())
         for stock in current_stock_set:
             if should_sell(context, stock):
                 order_target_value(stock, 0)
             else:
                 hold_list.append(stock)
 
-    buy_list = []
-    if trading_now(context):
         for stock in suggested_buy_list:
             if stock not in hold_list:
                 buy_list.append(stock)
