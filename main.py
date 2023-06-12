@@ -73,16 +73,18 @@ def market_open(context):
                 hold_list.remove(stock)
 
         for stock in suggested_buy_list:
-            if stock not in hold_list:
+            if stock not in hold_list and stock not in buy_more_list:
                 buy_list.append(stock)
 
         buy_stock(context, buy_list, buy_more_list)
 
 
 def buy_stock(context, buy_list, buy_more_list):
-    if len(buy_list) != 0:
-        cash = context.portfolio.available_cash / len(buy_list)
+    if len(buy_list) != 0 or len(buy_more_list) != 0:
+        cash = context.portfolio.available_cash / (len(buy_list) + len(buy_more_list))
         for stock in buy_list:
+            order_target_value(stock, cash)
+        for stock in buy_more_list:
             order_target_value(stock, cash)
 
 
